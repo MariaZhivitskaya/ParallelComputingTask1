@@ -3,314 +3,150 @@
 #include <iostream>
 #include <omp.h>
 #include <ctime>
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
-#include <complex>
 
 using namespace std;
 
+double startTime = -1;
 
-
-//int** matrix_multipl_par(int** matr1, int** matr2, int n, int threads_num = 1, int mode = 1) {
-//	int** matr = zero_matrix(n);
-//	if (mode == 4)
-//		threads_num = int(threads_num / 2);
-//	omp_set_num_threads(threads_num);
-//	omp_set_nested(true);
-//	double time1, time2;
-//	time1 = omp_get_wtime();
-//	int i = 0, j = 0, k = 0;
-//#pragma omp parallel for if(mode == 2 || mode == 4) private(j, k)
-//	for (i = 0; i < n; i++) {
-//#pragma omp parallel for if(mode == 3 || mode == 4) private(k)
-//		for (j = 0; j < n; j++) {
-//			for (k = 0; k < n; k++) {
-//				matr[i][j] += matr1[i][k] * matr2[k][j];
-//			}
-//		}
-//	}
-//	time2 = omp_get_wtime();
-//	res_time = (time2 - time1) / (double)CLOCKS_PER_SEC;
-//	switch (mode)
-//	{
-//	case 1:
-//		cout << "Time standart " << threads_num << " : " << time2 - time1 << '\n';
-//		break;
-//	case 2:
-//		cout << "Time paral i " << threads_num << " : " << time2 - time1 << '\n';
-//		break;
-//	case 3:
-//		cout << "Time paral j " << threads_num << " : " << time2 - time1 << '\n';
-//		break;
-//	case 4:
-//		cout << "Time paral ij " << threads_num << " : " << time2 - time1 << '\n';
-//		break;
-//	default:
-//		break;
-//	}
-//	return matr;
-//}
-//
-////int** matrix_multipl_par_two(int** matr1, int** matr2, int n, int threads_num){
-////	int** matr = zero_matrix(n);
-////	omp_set_num_threads(threads_num);
-////	double time1, time2;
-////	time1 = omp_get_wtime();
-////	int i = 0;
-////	int j = 0;
-////#pragma omp parallel for  if(1 == 0) shared(matr, matr1, matr2) private(i)
-////	for(i = 0; i < n; i++){
-////		//#pragma omp parallel for shared(matr, matr1, matr2) private(j)
-////		for(j = 0; j < n; j++){
-////			for(int k = 0; k < n; k++){
-////				matr[i][j] += matr1[i][k] * matr2[k][j];
-////			}
-////		}
-////	}
-////	time2 = omp_get_wtime();
-////	res_time = ( time2 - time1 ) / (double) CLOCKS_PER_SEC;
-////	cout << "Time paral(par_two) " << threads_num << ":" << time2 - time1 << '\n';
-////	return matr;
-////}
-//
-//int** matrix_multipl_block_par(int** matr1, int** matr2, int n, int block_size, int threads_num = 1, int mode = 1) {
-//	int** matr = zero_matrix(n);
-//	int block_num = n / block_size;
-//	omp_set_num_threads(threads_num);
-//	double time1, time2;
-//	time1 = omp_get_wtime();
-//	int i = 0, j = 0, k = 0, i1 = 0, j1 = 0, k1 = 0;
-//#pragma omp parallel for if(mode == 2 || mode == 4)  private(j, k, i1, j1, k1)
-//	for (i = 0; i < block_num; i++) {
-//		for (j = 0; j < block_num; j++) {
-//			for (k = 0; k < block_num; k++) {
-//#pragma omp parallel  for if(mode == 3 || mode == 4) private(j1, k1)
-//				for (i1 = i * block_size; i1 < (i + 1) * block_size; i1++) {
-//					for (j1 = j * block_size; j1 < (j + 1) * block_size; j1++) {
-//						for (k1 = k * block_size; k1 < (k + 1) * block_size; k1++) {
-//							matr[i1][j1] += matr1[i1][k1] * matr2[k1][j1];
-//						}
-//					}
-//				}
-//			}
-//		}
-//	}
-//	time2 = omp_get_wtime();
-//	switch (mode)
-//	{
-//	case 1:
-//		cout << "Time standart block " << threads_num << " block_num - " << block_num << " : " << time2 - time1 << '\n';
-//		break;
-//	case 2:
-//		cout << "Time paral block i " << threads_num << " block_num - " << block_num << " : " << time2 - time1 << '\n';
-//		break;
-//	case 3:
-//		cout << "Time paral block j " << threads_num << " block_num - " << block_num << " : " << time2 - time1 << '\n';
-//		break;
-//	case 4:
-//		cout << "Time paral block ij " << threads_num << " block_num - " << block_num << " : " << time2 - time1 << '\n';
-//		break;
-//	default:
-//		break;
-//	}
-//	return matr;
-//}
-
-void initMatr(int **matr1, int **matr2, int size)
+int **randMatr(int size)
 {
 	int left = -100;
 	int right = 100;
+	int **matr = new int*[size];
 
 	for (int i = 0; i < size; i++)
 	{
+		matr[i] = new int[size];
+
 		srand(time(0));
 
 		for (int j = 0; j < size; j++)
 		{
-			matr1[i][j] = rand() % (right - left + 1) + left;
-			matr2[i][j] = rand() % (right - left + 1) + left;
+			matr[i][j] = rand() % (right - left + 1) + left;
 		}
 	}
+
+	return matr;
 }
 
-int  **multiply(int **matr1, int **matr2, int size, double &time)
+int **zeroMatr(int size)
 {
-	int **matrRes = new int *[size];
+	int **matr = new int*[size];
+
 	for (int i = 0; i < size; i++)
 	{
-		matrRes[i] = new int[size];
+		matr[i] = new int[size];
 
 		for (int j = 0; j < size; j++)
 		{
-			matrRes[i][j] = 0;
+			matr[i][j] = 0;
 		}
 	}
 
-	double timeStart;
-	double timeEnd;
+	return matr;
+}
 
-	timeStart = clock();
+void removeMatr(int **matr, int size)
+{
+	for (int i = 0; i < size; i++)
+	{
+		delete matr[i];
+	}
+
+	delete matr;
+}
+
+void setStartTime()
+{
+	startTime = clock();
+}
+
+double getTime()
+{
+	return (clock() - startTime) / CLOCKS_PER_SEC;
+}
+
+double multiply(int size, int threadNum)
+{
+	double time = -1;
+	int **matr1 = randMatr(size);
+	int	**matr2 = randMatr(size);
+	int	**resMatr = zeroMatr(size);
+
+	omp_set_num_threads(threadNum);
+	setStartTime();
+#pragma omp parallel for shared(matr1, matr2, resMatr)
 	for (int i = 0; i < size; i++)
 	{
 		for (int j = 0; j < size; j++)
 		{
 			for (int k = 0; k < size; k++)
 			{
-				matrRes[i][j] += matr1[i][k] * matr2[k][j];
+				resMatr[i][j] += matr1[i][k] * matr2[j][k];
 			}
 		}
 	}
-	timeEnd = clock();
+	time = getTime();
 
-	time = (timeEnd - timeStart) / 1000;
+	removeMatr(matr1, size);
+	removeMatr(matr2, size);
+	removeMatr(resMatr, size);
 
-	return matrRes;
+	return time;
 }
 
-int **multiply(int **matr1, int **matr2, int size, int numberOfThreads, double &time)
+double multiply(int size, int r, int threadNum)
 {
-	int **matrRes = new int *[size];
-	for (int i = 0; i < size; i++)
+	double time = -1;
+	int **matr1 = randMatr(size);
+	int **matr2 = randMatr(size);
+	int **resMatr = zeroMatr(size);
+	int q = ceil(1.0 * size / r);
+	int ind1;
+	int ind2;
+	int ind3;
+	int ind4;
+	int ind5;
+
+	omp_set_num_threads(threadNum);
+	setStartTime();
+#pragma omp parallel for shared(matr1, matr2, resMatr)
+	for (int ij = 0; ij < q * q; ij++)
 	{
-		matrRes[i] = new int[size];
+		ind1 = ij / q;
+		ind2 = ij % q;
 
-		for (int j = 0; j < size; j++)
+		for (int k1 = 0; k1 < q; k1++)
 		{
-			matrRes[i][j] = 0;
-		}
-	}
+			ind3 = min((ind1 + 1)*r, size);
+			ind4 = min((ind2 + 1)*r, size);
+			ind5 = min((k1 + 1)*r, size);
 
-	numberOfThreads /= 2;
-
-	omp_set_num_threads(numberOfThreads);
-	omp_set_nested(true);
-
-	double timeStart;
-	double timeEnd;
-
-	timeStart = omp_get_wtime();
-	int i = 0;
-	int j = 0;
-	int k = 0;
-
-#pragma omp parallel for private(j, k)
-	for (i = 0; i < size; i++)
-	{
-#pragma omp parallel for private(k)
-		for (j = 0; j < size; j++)
-		{
-			for (k = 0; k < size; k++)
+			for (int i = ind1 * r; i < ind3; i++)
 			{
-				matrRes[i][j] += matr1[i][k] * matr2[k][j];
-			}
-		}
-	}
-	timeEnd = omp_get_wtime();
-
-	time = timeEnd - timeStart;
-
-	return matrRes;
-}
-
-int **multiplyBlocks(int **matr1, int **matr2, int size, int blockSize, double &time)
-{
-	int **matrRes = new int *[size];
-	for (int i = 0; i < size; i++)
-	{
-		matrRes[i] = new int[size];
-
-		for (int j = 0; j < size; j++)
-		{
-			matrRes[i][j] = 0;
-		}
-	}
-
-	int numberOfBlocks = size / blockSize;
-	double timeStart;
-	double timeEnd;
-
-	timeStart = clock();
-	for (int i = 0; i < numberOfBlocks; i++)
-	{
-		for (int j = 0; j < numberOfBlocks; j++)
-		{
-			for (int k = 0; k < numberOfBlocks; k++)
-			{
-				for (int i1 = i * blockSize; i1 < (i + 1) * blockSize; i1++)
+				for (int j = ind2 * r; j < ind4; j++)
 				{
-					for (int j1 = j * blockSize; j1 < (j + 1) * blockSize; j1++)
+					for (int k = k1 * r; k < ind5; k++)
 					{
-						for (int k1 = k * blockSize; k1 < (k + 1) * blockSize; k1++)
-						{
-							matrRes[i1][j1] += matr1[i1][k1] * matr2[k1][j1];
-						}
+						resMatr[i][j] += matr1[i][k] * matr2[j][k];
 					}
 				}
 			}
 		}
 	}
-	timeEnd = clock();
+	time = getTime();
 
-	time = (timeEnd - timeStart) / 1000;
+	removeMatr(matr1, size);
+	removeMatr(matr2, size);
+	removeMatr(resMatr, size);
 
-	return matrRes;
+	return time;
 }
 
-int **multiplyBlocks(int **matr1, int **matr2, int size, int blockSize, int numberOfThreads, double &time)
-{
-	int **matrRes = new int *[size];
-	for (int i = 0; i < size; i++)
-	{
-		matrRes[i] = new int[size];
-
-		for (int j = 0; j < size; j++)
-		{
-			matrRes[i][j] = 0;
-		}
-	}
-
-	int numberOfBlocks = size / blockSize;
-	double timeStart;
-	double timeEnd;
-
-	omp_set_num_threads(numberOfThreads);
-	
-	timeStart = omp_get_wtime();
-	int i = 0;
-	int j = 0;
-	int k = 0;
-	int i1 = 0;
-	int j1 = 0;
-	int k1 = 0;
-#pragma omp parallel for private(j, k, i1, j1, k1)
-	for (i = 0; i < numberOfBlocks; i++) 
-	{
-		for (j = 0; j < numberOfBlocks; j++) 
-		{
-			for (k = 0; k < numberOfBlocks; k++)
-			{
-#pragma omp parallel  for private(j1, k1)
-				for (i1 = i * blockSize; i1 < (i + 1) * blockSize; i1++) 
-				{
-					for (j1 = j * blockSize; j1 < (j + 1) * blockSize; j1++) 
-					{
-						for (k1 = k * blockSize; k1 < (k + 1) * blockSize; k1++)
-						{
-							matrRes[i1][j1] += matr1[i1][k1] * matr2[k1][j1];
-						}
-					}
-				}
-			}
-		}
-	}
-	timeEnd = omp_get_wtime();
-
-	time = timeEnd - timeStart;
-	
-	return matrRes;
-}
-
-void run(int **matr1, int **matr2, int size, string fileName)
+void run(vector<int> Ns, vector<int> Rs, vector<int> Threads, string fileName)
 {
 	double time;
 	int **matrRes;
@@ -318,77 +154,55 @@ void run(int **matr1, int **matr2, int size, string fileName)
 	ofstream fout;
 	fout.open(fileName);
 
-	fout << "Size: " << size << endl;
+	for (int n : Ns) {
+		fout << "Matrix size: " << n << endl;
 
-	initMatr(matr1, matr2, size);
-	matrRes = multiply(matr1, matr2, size, time);
-	fout << "Point multiplication time: " << endl << time << endl;
-
-	fout << "Point multiplication time parallel: " << endl;
-	for (int numberOfThreads = 2; numberOfThreads <= 10; numberOfThreads += 2)
-	{
-		matrRes = multiply(matr1, matr2, size, numberOfThreads, time);
-		fout << time << endl;
-	}
-
-	fout << "Block multiplication time: " << endl;
-	for (int blockSize = 10; blockSize < size / 2; blockSize += 10)
-	{
-		matrRes = multiplyBlocks(matr1, matr2, size, blockSize, time);
-		fout << time << endl;
-	}
-
-	fout << "Block multiplication time parallel: " << endl;
-	for (int numberOfThreads = 2; numberOfThreads <= 10; numberOfThreads += 2)
-	{
-		fout << "number of threads: " << numberOfThreads << endl;
-		for (int blockSize = 10; blockSize < size / 2; blockSize += 10)
+		fout << "Threads";
+		for (int threadNum : Threads)
 		{
-			matrRes = multiplyBlocks(matr1, matr2, size, blockSize, time);
-			fout << time << endl;
+			fout << '\t' << threadNum;
 		}
+		fout << endl;
+
+		for (int r : Rs)
+		{
+			if (r > n / 2 && r != n)
+			{
+				continue;
+			}
+
+			fout << r;
+			for (int threadNum : Threads)
+			{
+
+				if (r == 0)
+				{
+					time = multiply(n, threadNum);
+				}
+				else
+				{
+					time = multiply(n, r, threadNum);
+				}
+
+				fout << '\t' << setprecision(3) << time;
+			}
+			fout << endl;
+		}
+		fout << endl;
 	}
 
 	fout.close();
-
-	for (int i = 0; i < size; i++)
-	{
-		delete matr1[i];
-		delete matr2[i];
-	}
-
-	delete matr1;
-	delete matr2;
 }
 
 int main()
 {
-	int size1 = 500;
-	int size2 = 1500;
+	string fileName = "Test.txt";
 
-	int **matr1;
-	int **matr2;
+	vector<int> Ns({ 500,1000,1500 });
+	vector<int> Rs({ 0,1,2,5,10,50,100,200,300,400,500,600,700,800,900,1000 });
+	vector<int> Threads({ 1,2,4,8,16 });
 
-	string fileName1 = "Test1.csv";
-	string fileName2 = "Test2.csv";
-
-	matr1 = new int *[size1];
-	matr2 = new int *[size1];
-	for (int i = 0; i < size1; i++)
-	{
-		matr1[i] = new int[size1];
-		matr2[i] = new int[size1];
-	}
-	run(matr1, matr2, size1, fileName1);
-
-	matr1 = new int *[size2];
-	matr2 = new int *[size2];
-	for (int i = 0; i < size2; i++)
-	{
-		matr1[i] = new int[size2];
-		matr2[i] = new int[size2];
-	}
-	run(matr1, matr2, size2, fileName2);
+	run(Ns, Rs, Threads, fileName);
 
 	cout << endl;
 	system("pause");
